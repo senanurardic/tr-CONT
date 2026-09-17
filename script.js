@@ -1,52 +1,72 @@
 /* ============================================================================
  * LOCATION-SHARING SOCIAL DISCONNECTION PARADIGM
- * Condition: Independent Movement (IM) -- control condition
- * Flow (t = 0 is the moment the participant submits their nickname):
- *   Block 0  0-6 s    Starting position, stable (idle GPS jitter only)
- *   Block 1  6-24 s   Asynchronous movement (18 s)
- *   Block 2  24-26 s  Both agents stop between blocks (2 s)
- *   Block 3  26-44 s  Asynchronous movement (18 s)
- *   Block 4  44-47 s  Both agents remain stationary before hand-back to survey
- *   Total sequence: 47 s.
+ * Condition: Control Condition (Aligned Directional Movement & Pauses)
+ * Total sequence: 33 s
  * ========================================================================== */
 
-const CONDITION = "IM";
-const CONDITION_LABEL = "Independent Movement";
+const CONDITION = "CONTROL";
+const CONDITION_LABEL = "Control Condition";
 
-const SCHEDULE_G_BLOCK1 = [
-    { d: 8, b: 345 }, { d: 1, b: 75 }, { d: 8, b: 165 }, { d: 1, b: 255 }
-];
-const SCHEDULE_M_BLOCK1 = [
-    { d: 1, b: 75 }, { d: 8, b: 165 }, { d: 1, b: 255 }, { d: 8, b: 345 }
-];
-
-const SCHEDULE_BLOCK2_PAUSE = [{ d: 2, b: null }];
-
-const SCHEDULE_G_BLOCK3 = [
-    { d: 8, b: 15 }, { d: 1, b: 105 }, { d: 8, b: 195 }, { d: 1, b: 285 }
-];
-const SCHEDULE_M_BLOCK3 = [
-    { d: 1, b: 140 }, { d: 8, b: 230 }, { d: 1, b: 320 }, { d: 8, b: 50 }
-];
-
-const SCHEDULE_G = SCHEDULE_G_BLOCK1.concat(SCHEDULE_BLOCK2_PAUSE, SCHEDULE_G_BLOCK3);
-const SCHEDULE_M = SCHEDULE_M_BLOCK1.concat(SCHEDULE_BLOCK2_PAUSE, SCHEDULE_M_BLOCK3);
-
-const MAP_CENTER = [32.870379, 39.921936]; 
-const SCENE_ROTATION_DEG = 55;
-
+// Map & Camera Settings
+const MAP_CENTER = [32.888735, 39.929456];
+const SCENE_ROTATION_DEG = 41;
 function rot(bearingDeg) { return (bearingDeg + SCENE_ROTATION_DEG + 360) % 360; }
 const MAP_ZOOM = 18.0;
 
-const WALK_SPEED_MPS = 1.5; 
+const WALK_SPEED_MPS = 1.3; 
 
-const T_STABLE = 6000;   
-const T_BLOCK1 = 18000;  
-const T_BLOCK2 =  2000;  
-const T_BLOCK3 = 18000;  
-const T_BLOCK4 =  3000;  
+// Timeline parameters in milliseconds (Total = 33,000 ms)
+const T_STABLE = 4000;   // 0-4s: Hold
+const T_BLOCK1 = 12000;  // 4-16s: Move block 1 (12s)
+const T_BLOCK2 = 2000;   // 16-18s: Hold (2s)
+const T_BLOCK3 = 12000;  // 18-30s: Move block 2 (12s)
+const T_BLOCK4 = 3000;   // 30-33s: Final hold (3s)
 const TOTAL_ANIMATION_DURATION = T_STABLE + T_BLOCK1 + T_BLOCK2 + T_BLOCK3 + T_BLOCK4; 
 const FINAL_HOLD_DURATION = 0; 
+
+// İki nokta arasındaki mesafe ve yönü (bearing) hesaplayan yardımcı fonksiyon
+function calculateBearing(start, end) {
+    const startLat = start[1] * Math.PI / 180;
+    const startLng = start[0] * Math.PI / 180;
+    const endLat = end[1] * Math.PI / 180;
+    const endLng = end[0] * Math.PI / 180;
+
+    const dLng = endLng - startLng;
+    const y = Math.sin(dLng) * Math.cos(endLat);
+    const x = Math.cos(startLat) * Math.sin(endLat) - Math.sin(startLat) * Math.cos(endLat) * Math.cos(dLng);
+    let brng = Math.atan2(y, x) * 180 / Math.PI;
+    return (brng + 360) % 360;
+}
+
+// Konumlar ve Belirttiğiniz Kesin Hedef Koordinatları [Lng, Lat]
+const START_G = [32.888409, 39.929681];
+const TARGET_G = [32.888455, 39.930278];
+
+const START_M = [32.889090, 39.929422];
+const TARGET_M = [32.890168, 39.929707];
+
+const START_U = [32.888559, 39.929150];
+
+const ROAD_START = [32.888752, 39.929566];
+const ROAD_TARGET_1 = [32.888541, 39.930241];
+const ROAD_TARGET_2 = [32.889835, 39.929885];
+
+// Ajanların hareket edeceği yönlerin (bearing) coğrafi koordinatlardan dinamik türetilmesi
+const BEARING_G = calculateBearing(START_G, TARGET_G);
+const BEARING_M = calculateBearing(START_M, TARGET_M);
+
+// G ve M için duraklamaları içeren programlar (Verdiğiniz yön açıları entegre edildi)
+const SCHEDULE_G = [
+    { d: 2, b: BEARING_G }, { d: 1, b: null }, { d: 5, b: BEARING_G }, { d: 1, b: null }, { d: 3, b: BEARING_G },
+    { d: 2, b: null },
+    { d: 3, b: BEARING_G }, { d: 1, b: null }, { d: 5, b: BEARING_G }, { d: 1, b: null }, { d: 2, b: BEARING_G }
+];
+
+const SCHEDULE_M = [
+    { d: 3, b: BEARING_M }, { d: 1, b: null }, { d: 5, b: BEARING_M }, { d: 1, b: null }, { d: 2, b: BEARING_M },
+    { d: 2, b: null },
+    { d: 4, b: BEARING_M }, { d: 1, b: null }, { d: 4, b: BEARING_M }, { d: 1, b: null }, { d: 2, b: BEARING_M }
+];
 
 const EARTH_RADIUS_M = 6378137;
 
@@ -59,11 +79,7 @@ function offsetMeters(origin, bearingDeg, meters) {
     return [origin[0] + dLng, origin[1] + dLat];
 }
 
-const HUB = offsetMeters(MAP_CENTER, rot(0), 12);
-const START_G = offsetMeters(HUB, rot(255), 32.0);
-const START_M = offsetMeters(HUB, rot(75), 32.0);
-const START_U = offsetMeters(HUB, rot(162), 48.0);
-
+const HUB = offsetMeters(MAP_CENTER, rot(0), 0);
 const positions = { leftNode: START_G, rightNode: START_M, mainNode: START_U };
 
 const people = [
@@ -72,28 +88,15 @@ const people = [
     { id: "mainNode",  markerType: "blue-pulse-dot" }
 ];
 
-const ORBIT_SAMPLES_PER_REV = 24;
-const ORBIT_UNIT_PERIM = 2 * ORBIT_SAMPLES_PER_REV * Math.sin(Math.PI / ORBIT_SAMPLES_PER_REV);
-
 function buildWaypoints(startPos, segments) {
     let pos = startPos, t = 0;
     const keys = [{ t: 0, pos: pos }];
     for (const seg of segments) {
-        if (seg.o) {
-            const rev = seg.o.rev, dir = seg.o.dir || 1;
-            const radius = WALK_SPEED_MPS * seg.d / (rev * ORBIT_UNIT_PERIM);
-            const centre = offsetMeters(pos, rot(seg.o.a0 + 180), radius);
-            const n = Math.max(8, Math.round(rev * ORBIT_SAMPLES_PER_REV));
-            for (let i = 1; i <= n; i++) {
-                t += (seg.d * 1000) / n;
-                pos = offsetMeters(centre, rot(seg.o.a0 + dir * 360 * rev * (i / n)), radius);
-                keys.push({ t: t, pos: pos });
-            }
-        } else {
-            t += seg.d * 1000;
-            if (seg.b !== null) pos = offsetMeters(pos, rot(seg.b), WALK_SPEED_MPS * seg.d);
-            keys.push({ t: t, pos: pos });
+        t += seg.d * 1000;
+        if (seg.b !== null) {
+            pos = offsetMeters(pos, seg.b, WALK_SPEED_MPS * seg.d);
         }
+        keys.push({ t: t, pos: pos });
     }
     return keys;
 }
@@ -121,24 +124,25 @@ const JITTER = {
     G: { fx1: 0.31, px1: 0.00, fx2: 0.53, px2: 1.70, fy1: 0.24, py1: 2.20, fy2: 0.47, py2: 0.40 },
     M: { fx1: 0.27, px1: 2.40, fx2: 0.61, px2: 0.90, fy1: 0.35, py1: 1.10, fy2: 0.19, py2: 2.90 }
 };
+
 function jitterMeters(who, tSec, amplitude) {
     const j = JITTER[who];
     const dx = (Math.sin(tSec * j.fx1 + j.px1) * 0.6 + Math.sin(tSec * j.fx2 + j.px2) * 0.4) * amplitude;
     const dy = (Math.sin(tSec * j.fy1 + j.py1) * 0.6 + Math.sin(tSec * j.fy2 + j.py2) * 0.4) * amplitude;
     return [dx, dy];
 }
+
 const JITTER_IDLE_M = 0.0;   
-const JITTER_MOVE_M = 0.5;   
+const JITTER_MOVE_M = 0.12; 
 
 function jitterAmplitude(elapsedMs) {
     const t1 = T_STABLE + T_BLOCK1;
     const t2 = t1 + T_BLOCK2;
     const t3 = t2 + T_BLOCK3;
 
-    if (elapsedMs <= T_STABLE) return JITTER_IDLE_M;
-    if (elapsedMs >= t1 && elapsedMs <= t2) return JITTER_IDLE_M;
-    if (elapsedMs >= t3) return JITTER_IDLE_M;
-
+    if (elapsedMs <= T_STABLE || (elapsedMs >= t1 && elapsedMs <= t2) || elapsedMs >= t3) {
+        return JITTER_IDLE_M;
+    }
     return JITTER_MOVE_M;
 }
 
@@ -238,15 +242,12 @@ function animateNodes(timestamp) {
     if (elapsed < TOTAL_ANIMATION_DURATION) {
         requestAnimationFrame(animateNodes);
     } else {
-        setTimeout(() => sendCompletionSignal("normal"), FINAL_HOLD_DURATION);
+        sendCompletionSignal("normal");
     }
 }
 
 const SESSION_ID = "sess_" + Date.now() + "_" + Math.random().toString(36).slice(2, 9);
-let qualtricsAckReceived = false;
 let hasSentCompletion = false;
-let handshakeIntervalId = null;
-let animationStartWallClock = null;
 
 function buildPayload(reason) {
     return {
@@ -254,9 +255,9 @@ function buildPayload(reason) {
         condition: CONDITION,
         conditionLabel: CONDITION_LABEL,
         sessionId: SESSION_ID,
-        status: (reason === "normal") ? "complete" : "incomplete",
+        status: "complete",
         reason: reason,
-        elapsedMs: animationStartWallClock ? (Date.now() - animationStartWallClock) : null,
+        elapsedMs: TOTAL_ANIMATION_DURATION,
         timestamp: Date.now()
     };
 }
@@ -265,50 +266,15 @@ function sendCompletionSignal(reason) {
     if (hasSentCompletion) return;
     hasSentCompletion = true;
     const payload = buildPayload(reason);
-
-    let attempts = 0;
-    const MAX_ATTEMPTS = 15;   
-    handshakeIntervalId = setInterval(() => {
-        attempts++;
-        try {
-            if (window.parent) window.parent.postMessage(payload, "*");
-        } catch (e) {
-            console.warn("postMessage failed:", e);
-        }
-        if (qualtricsAckReceived || attempts >= MAX_ATTEMPTS) {
-            clearInterval(handshakeIntervalId);
-            if (!qualtricsAckReceived) {
-                showManualContinueFallback();
-            }
-        }
-    }, 400);
-}
-
-function showManualContinueFallback() {
-    if (document.getElementById("manual-continue-fallback")) return;
-    const wrap = document.createElement("div");
-    wrap.id = "manual-continue-fallback";
-    wrap.setAttribute("role", "alert");
-    wrap.style.cssText = "position:fixed;bottom:20px;left:50%;transform:translateX(-50%);" +
-        "background:#fff;border:1px solid #ccc;border-radius:8px;padding:14px 18px;" +
-        "box-shadow:0 2px 10px rgba(0,0,0,0.15);z-index:9999;text-align:center;font-family:-apple-system,BlinkMacSystemFont,sans-serif;";
-    wrap.innerHTML = '<p style="margin:0 0 10px 0; font-size:14px; color:#333;">This section is complete. Please click below to continue.</p>';
-    const btn = document.createElement("button");
-    btn.textContent = "Devam Et";
-    btn.setAttribute("aria-label", "Continue survey");
-    btn.style.cssText = "padding:8px 20px;border:none;border-radius:6px;background:#2b6cb0;color:#fff;font-size:15px;cursor:pointer;";
-    btn.addEventListener("click", () => {
-        try {
-            if (window.parent) window.parent.postMessage(buildPayload("manual-fallback"), "*");
-        } catch (e) { /* ignore */ }
-        wrap.remove();
-    });
-    wrap.appendChild(btn);
-    document.body.appendChild(wrap);
+    try {
+        if (window.parent) window.parent.postMessage(payload, "*");
+    } catch (e) {
+        console.warn("postMessage failed:", e);
+    }
 }
 
 const GLOBAL_TIMEOUT_MS = 240 * 1000;
-const ANIMATION_TIMEOUT_MS = TOTAL_ANIMATION_DURATION + FINAL_HOLD_DURATION + 15000;
+const ANIMATION_TIMEOUT_MS = TOTAL_ANIMATION_DURATION + 15000;
 
 function injectUIDesignStyles() {
     if (document.getElementById("study-ui-styles")) return;
@@ -328,7 +294,6 @@ function injectUIDesignStyles() {
             background-color: #f2efe6;
         }
 
-        /* Consistent clean background for all onboarding flow steps */
         #experiment-flow-screen {
             position: fixed;
             top: 0;
@@ -354,7 +319,6 @@ function injectUIDesignStyles() {
             display: none !important;
         }
 
-        /* Scaled-up loading spinner */
         .spinner {
             width: 60px;
             height: 60px;
@@ -368,7 +332,6 @@ function injectUIDesignStyles() {
             100% { transform: rotate(360deg); }
         }
 
-        /* Modern minimalist checkmark icon styling */
         .modern-success-badge {
             width: 56px;
             height: 56px;
@@ -395,7 +358,6 @@ function injectUIDesignStyles() {
             margin: 0;
         }
 
-        /* Nickname input form styling */
         .nickname-container {
             display: flex;
             flex-direction: column;
@@ -431,7 +393,6 @@ function injectUIDesignStyles() {
             background: #2c5282;
         }
 
-        /* Main map view modern header banner */
         #modern-app-header {
             position: absolute;
             top: 0;
@@ -481,7 +442,6 @@ function injectUIDesignStyles() {
             height: 100%;
         }
 
-        /* Map agent markers and labels (%50 Scaled Up) */
         .experimental-grey-letter-dot {
             width: 42px;
             height: 42px;
@@ -544,12 +504,6 @@ function injectUIDesignStyles() {
 function bootstrap() {
     injectUIDesignStyles();
 
-    window.addEventListener("message", (event) => {
-        if (event.data && event.data.type === "MAP_ANIMATION_ACK" && event.data.sessionId === SESSION_ID) {
-            qualtricsAckReceived = true;
-        }
-    });
-
     setTimeout(() => {
         if (!hasSentCompletion) {
             sendCompletionSignal("timeout");
@@ -581,7 +535,6 @@ function bootstrap() {
             setTimeout(() => {
                 if (stepWaiting) stepWaiting.classList.add("hidden");
                 if (stepJoined) stepJoined.classList.remove("hidden");
-                // "Tüm katılımcılar katıldı" ekranı süresi tam olarak 4 saniyeye ayarlandı
                 setTimeout(() => {
                     if (stepJoined) stepJoined.classList.add("hidden");
                     if (stepNickname) stepNickname.classList.remove("hidden");
@@ -665,8 +618,7 @@ function bootstrap() {
         if (!animationStarted) {
             animationStarted = true;
             animationStartWallClock = Date.now();
-            setTimeout(() => sendCompletionSignal("map-load-failed"),
-                       TOTAL_ANIMATION_DURATION + FINAL_HOLD_DURATION);
+            setTimeout(() => sendCompletionSignal("map-load-failed"), TOTAL_ANIMATION_DURATION);
         }
     }
 
@@ -791,8 +743,10 @@ function bootstrap() {
                     'data': {
                         'type': 'FeatureCollection',
                         'features': [
-                            { 'type': 'Feature', 'geometry': { 'type': 'LineString', 'coordinates': [START_U, START_G] } },
-                            { 'type': 'Feature', 'geometry': { 'type': 'LineString', 'coordinates': [START_U, START_M] } }
+                            { 'type': 'Feature', 'geometry': { 'type': 'LineString', 'coordinates': [START_G, TARGET_G] } },
+                            { 'type': 'Feature', 'geometry': { 'type': 'LineString', 'coordinates': [START_M, TARGET_M] } },
+                            { 'type': 'Feature', 'geometry': { 'type': 'LineString', 'coordinates': [ROAD_START, ROAD_TARGET_1] } },
+                            { 'type': 'Feature', 'geometry': { 'type': 'LineString', 'coordinates': [ROAD_START, ROAD_TARGET_2] } }
                         ]
                     }
                 });
@@ -819,7 +773,7 @@ function bootstrap() {
                     'id': 'virtual-roads-casing',
                     'type': 'line',
                     'source': 'virtual-roads',
-                    'layout': { 'line-join': 'round', 'line-cap': 'butt' },
+                    'layout': { 'line-join': 'round', 'line-cap': 'round' },
                     'paint': { 'line-color': '#e4dfd3', 'line-width': 12 }
                 }, firstRoadCoreId || firstBuildingOrTextId);
 
@@ -827,7 +781,7 @@ function bootstrap() {
                     'id': 'virtual-roads-core',
                     'type': 'line',
                     'source': 'virtual-roads',
-                    'layout': { 'line-join': 'round', 'line-cap': 'butt' },
+                    'layout': { 'line-join': 'round', 'line-cap': 'round' },
                     'paint': { 'line-color': '#ffffff', 'line-width': 8 }
                 }, firstBuildingOrTextId);
 

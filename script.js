@@ -11,9 +11,9 @@ const CONDITION_LABEL = "Control Condition";
 const MAP_CENTER = [32.888735, 39.929456];
 const SCENE_ROTATION_DEG = 41;
 function rot(bearingDeg) { return (bearingDeg + SCENE_ROTATION_DEG + 360) % 360; }
-const MAP_ZOOM = 17.0;
+const MAP_ZOOM = 17.3;
 
-const WALK_SPEED_MPS = 1.3; 
+const WALK_SPEED_MPS = 1.5; 
 
 // Timeline parameters in milliseconds (Total = 33,000 ms)
 const T_STABLE = 4000;   // 0-4s: Hold

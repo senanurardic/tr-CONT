@@ -443,17 +443,17 @@ function injectUIDesignStyles() {
         }
 
         .experimental-grey-letter-dot {
-            width: 42px;
-            height: 42px;
+            width: 37.8px;
+            height: 37.8px;
             background: #64748b;
             color: white;
-            border: 2.5px solid #ffffff;
+            border: 2.25px solid #ffffff;
             border-radius: 50%;
             display: flex;
             align-items: center;
             justify-content: center;
             font-weight: 700;
-            font-size: 19px;
+            font-size: 17px;
             box-shadow: 0 3px 8px rgba(0,0,0,0.3);
         }
         .google-maps-dot-container {
@@ -746,7 +746,8 @@ function bootstrap() {
                             { 'type': 'Feature', 'geometry': { 'type': 'LineString', 'coordinates': [START_G, TARGET_G] } },
                             { 'type': 'Feature', 'geometry': { 'type': 'LineString', 'coordinates': [START_M, TARGET_M] } },
                             { 'type': 'Feature', 'geometry': { 'type': 'LineString', 'coordinates': [ROAD_START, ROAD_TARGET_1] } },
-                            { 'type': 'Feature', 'geometry': { 'type': 'LineString', 'coordinates': [ROAD_START, ROAD_TARGET_2] } }
+                            { 'type': 'Feature', 'geometry': { 'type': 'LineString', 'coordinates': [ROAD_START, ROAD_TARGET_2] } },
+                            { 'type': 'Feature', 'geometry': { 'type': 'LineString', 'coordinates': [[32.888292, 39.930351], [32.887327, 39.930721]] } }
                         ]
                     }
                 });
@@ -773,16 +774,28 @@ function bootstrap() {
                     'id': 'virtual-roads-casing',
                     'type': 'line',
                     'source': 'virtual-roads',
-                    'layout': { 'line-join': 'round', 'line-cap': 'round' },
-                    'paint': { 'line-color': '#e4dfd3', 'line-width': 12 }
+                    'layout': { 
+                        'line-join': 'round', 
+                        'line-cap': 'round' 
+                    },
+                    'paint': { 
+                        'line-color': '#e4dfd3', 
+                        'line-width': 12 
+                    }
                 }, firstRoadCoreId || firstBuildingOrTextId);
 
                 map.addLayer({
                     'id': 'virtual-roads-core',
                     'type': 'line',
                     'source': 'virtual-roads',
-                    'layout': { 'line-join': 'round', 'line-cap': 'round' },
-                    'paint': { 'line-color': '#ffffff', 'line-width': 8 }
+                    'layout': { 
+                        'line-join': 'round', 
+                        'line-cap': 'round' 
+                    },
+                    'paint': { 
+                        'line-color': '#ffffff', 
+                        'line-width': 8 
+                    }
                 }, firstBuildingOrTextId);
 
                 map.getCanvas().style.filter = "none";

@@ -8,10 +8,10 @@ const CONDITION = "CONTROL";
 const CONDITION_LABEL = "Control Condition";
 
 // Map & Camera Settings
-const MAP_CENTER = [32.889220, 39.929590];
+const MAP_CENTER = [32.889052, 39.929302];
 const SCENE_ROTATION_DEG = 41;
 function rot(bearingDeg) { return (bearingDeg + SCENE_ROTATION_DEG + 360) % 360; }
-const MAP_ZOOM = 17.1;
+const MAP_ZOOM = 17.0;
 
 const WALK_SPEED_MPS = 2.1; 
 

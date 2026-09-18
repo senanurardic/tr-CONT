@@ -11,7 +11,7 @@ const CONDITION_LABEL = "Control Condition";
 const MAP_CENTER = [32.889220, 39.929590];
 const SCENE_ROTATION_DEG = 41;
 function rot(bearingDeg) { return (bearingDeg + SCENE_ROTATION_DEG + 360) % 360; }
-const MAP_ZOOM = 17.3;
+const MAP_ZOOM = 17.1;
 
 const WALK_SPEED_MPS = 2.1; 
 
